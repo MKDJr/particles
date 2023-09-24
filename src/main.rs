@@ -28,10 +28,12 @@ fn update(dt: f32, particles: &mut Vec<Particle>) {
         handle_wall_collisions(particle, old_pos);
     }
 
-    for other_particle in particles.iter() {
-        let a = particle;
-        let b = other_particle;
-        {
+    let num_particles = particles.len();
+    for i in num_particles.iter() {
+        for j in num_particles.iter() {
+            let a = particles[i];
+            let b = particles[j];
+
             let normal = a.pos - b.pos;
             let unit_normal = normal.normalize();
             let unit_tangent = Vec2::new(unit_normal.y, unit_normal.x);
