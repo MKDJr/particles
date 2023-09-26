@@ -3,10 +3,32 @@ use macroquad::prelude::*;
 use ordered_float::{self, OrderedFloat};
 use std::string::ToString;
 use std::{cell::RefCell, rc::Rc};
-
+use std::collections::*;
+use std::cmp::min;
+use std::cmp::max;
 const RADIUS: f32 = 10.;
 
 const COEF_OF_RESTITUTION: f32 = 0.5;
+
+#[derive(Debug, Copy, Clone)]
+
+struct AABB {
+    lower_bound: Vec2,
+    upper_bound: Vec2,
+}
+
+fn union(a: AABB, b: AABB) {
+    let mut c : AABB = None;
+    c.lower_bound.x = min(a.lower_bound.x, b.lower_bound.x);
+    c.lower_bound.y = min(a.lower_bound.y, b.lower_bound.y);
+    c.upper_bound.x = max(a.upper_bound.x, b.upper_bound.x);
+    c.upper_bound.y = max(a.upper_bound.x, b.upper_bound.y);
+    return c;
+}
+
+fn area(a: AABB) {
+    return (a.upper_bound.x - a.lower_bound.x) * (a.upper_bound.y - a.lower_bound.y)
+}
 
 #[derive(Debug, Copy, Clone)]
 struct Particle {
@@ -18,22 +40,45 @@ struct Particle {
     // charge: f32,
     mass: f32,
 }
-#[derive(Debug, Copy, Clone)]
-struct Box {
-    xmax: f32,
-    xmin: f32,
-    ymax: f32,
-    ymin: f32,
-}
 
-struct TreeNode {
+struct Node {
     particles: Vec<Particle>,
-    bbox: Box,
-    left_child: Option<Rc<RefCell<TreeNode>>>,
-    right_child: Option<Rc<RefCell<TreeNode>>>,
+    bbox: AABB,
+    index: i32,
+    parent_index: i32,
+    is_leaf: bool,
+    left: i32,
+    right: i32,
 }
 
-impl Particle {}
+struct Tree {
+    nodes: HashMap<Node>,
+    root_index: i32,
+    node_count: i32,
+}
+fn search_tree(tree: Tree) {
+    let mut heap = BinaryHeap::new();
+    heap.push(tree.root_index);
+    while heap.is_empty() == false {
+        let index = heap.pop();
+    }
+
+}
+
+fn insert_leaf(tree: Tree, particle_index: i32, bbox: AABB ) {
+    let leaf_index = allocate_leaf_node(tree, particle_index, bbox);
+    if tree.node_count == 1 {
+        tree.root_index = leafIndex;
+    }
+
+    // Stage 1: find the best sibling for the new leaf
+    let best_sibling: i32 = 0;
+    for 0..
+    // Stage 2: create a new parent
+    // Stage 3: walk back up the tree refitting AABBs
+
+
+}
 
 fn update(dt: f32, old_particles: &Vec<Particle>) {
     // clone list to get new particle list and return that
@@ -91,22 +136,85 @@ fn update(dt: f32, old_particles: &Vec<Particle>) {
 
 fn find_collisions(old_particles: &Vec<Particle>) //-> Vec<i32>
 {
-    let mut collided_particles = Vec::new();
-    let mut bboxes = Vec::new();
+    let mut new_particles = old_particles.clone();
 
-    let mut sorted_particles = old_particles.clone();
-    sorted_particles.sort_by(|d1: &Particle, d2| d1.pos.x.partial_cmp(&d2.pos.x).unwrap());
+    let mut root = TreeNode::new(new_particles);
+    let mut tree = BTreeMap::new();
+    tree.insert(1, TreeNode)
 
-    let median = sorted_particles.len() / 2;
 
-    let (a_group, b_group) = sorted_particles.split_at(median);
 
-    let a_bbox = create_bbox(a_group);
-    let b_bbox = create_bbox(b_group);
+    let sorted_particles = new_particles.sort_by(|d1: &Particle, d2| d1.pos.x.partial_cmp(&d2.pos.x).unwrap()); 
 
-    if a_bbox.xmax > b_bbox.xmin {
-        collided_particles.push((a_group.iter(), b_group.iter()))
+/*
+loop {
+    if node.particles.len() == 2 {}
+    else if node.particles.len() > 2 {
+        break it up
     }
+    if node.left {node = node.left}
+    if node.right {}
+}
+*/
+
+// if bbox_tree_node.particles.len() == 2 {bbox_tree_node.leaf = true}
+
+    loop {
+        if &axis == "x" {
+            if sorted_particles.len() > 2 {
+                let median = sorted_particles.len() / 2;
+                let (a_group, b_group) = sorted_particles.split_at(median);
+                let a_bbox = create_bbox(a_group);
+                let b_bbox = create_bbox(b_group);
+
+                
+
+                
+            } else if sorted_particles.len() == 2 {
+                if a_bbox.xmax > b_bbox.xmin {
+
+                    bbox_tree_parent.left(TreeNode::new(a_group)
+                    bbox_tree_parent.right_child = TreeNode{particles: b_group, bbox: b_bbox, left_child: (), right_child: ()};
+                }
+
+            }
+
+            axis == "y"
+        }
+        else if &axis == "y" {
+            sorted_particles.sort_by(|d1: &Particle, d2| d1.pos.y.partial_cmp(&d2.pos.y).unwrap()); 
+            let median = sorted_particles.len() / 2;
+            let (a_group, b_group) = sorted_particles.split_at(median);
+            let a_bbox = create_bbox(a_group);
+            let b_bbox = create_bbox(b_group);
+
+            if a_bbox.ymax > b_bbox.ymin {
+                collided_particles.push((a_group.iter(), b_group.iter()))
+            }
+
+
+
+             axis == "x"
+        }
+
+
+
+    }
+
+
+
+
+
+    bbox_tree_root.left_child = TreeNode{particles: a_group, bbox: a_bbox, left_child: (), right_child: ()};
+    bbox_tree_root.left_child = TreeNode{particles: b_group, bbox: b_bbox, left_child: (), right_child: ()};
+
+
+
+
+
+
+    bbox_tree_root.left_child = TreeNode{particles: a_group, bbox: a_bbox, left_child: (), right_child: ()};
+    bbox_tree_root.left_child = TreeNode{particles: b_group, bbox: b_bbox, left_child: (), right_child: ()};
 
     // -------
     sorted_particles = a_group.to_vec().clone();
@@ -120,7 +228,7 @@ fn find_collisions(old_particles: &Vec<Particle>) //-> Vec<i32>
         collided_particles.push((a_group.iter(), b_group.iter()))
     }
 
-    for bbox in bboxes.iter() {}
+    for bbox in bboxes.iter() {
 
     // find median
     // create box around each group
@@ -134,7 +242,7 @@ fn find_collisions(old_particles: &Vec<Particle>) //-> Vec<i32>
 }
 
 fn create_bbox(particle_group: &[Particle]) -> Box {
-    let mut bbox = Box {
+    let mut bbox = Bbox {
         xmax: 0.,
         xmin: 0.,
         ymax: 0.,
