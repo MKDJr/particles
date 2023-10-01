@@ -1,2 +1,4 @@
-lists/target/
-particles/target/
+# Generated files
+/lists/target/
+/particles/target/
+particles/target/.rustc_info.json
