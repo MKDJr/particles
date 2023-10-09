@@ -107,25 +107,123 @@ fn intersect(a: AABB, b: AABB) -> bool {
 //     return surface_area;
 // }
 
-// fn check_if_in_tree(particle: Particle, tree: Tree) {
-//     match tree.get(particle) {
-//         Some(node) => return true,
-//         None => return false,
-//     }
-// }
+// fn add_particle_to_tree
+
+fn get_vector_subset(vector: &Vec<Particle>, indeces_to_get: &Vec<usize>) -> Vec<Particle> {
+    let mut new_vector = Vec::new();
+    for index in indeces_to_get.iter() {
+        new_vector.push(vector[*index])
+    }
+    return new_vector;
+}
+fn regenerate_tree(tree: &Vec<Node>, particles: &Vec<Particle>) -> Vec<Node> {
+    let mut new_tree: Vec<Node> = Vec::new();
+    // find root
+    let root_index = tree
+        .iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
+        .unwrap()
+        .0;
+
+    // add root to stack
+    let mut stack = vec![root_index];
+
+    /*
+    important caveat
+
+    i am creating a new tree here, so for each node we go
+    through in the old tree, we must add one to the new tree
+    */
+
+    // iterate through stack
+    while !stack.is_empty() {
+        let current_node_index = stack.pop().unwrap();
+
+        match &tree[current_node_index].kind {
+            // if root
+            NodeKind::Root {
+                indeces_of_particle_group,
+                left_child_index: _,
+                right_child_index: _,
+            } => {
+                // get particles here
+                let mut working_particles = get_vector_subset(particles, indeces_of_particle_group);
+
+                // CHECK IF PARTICLE# IS 1, IF SO, DONE
+
+                // split particles at median
+                working_particles.sort_by(|a, b| b.pos.x.partial_cmp(&a.pos.x).unwrap());
+                let median_index = working_particles.len() / 2;
+
+                // calculate area of aabb for both halves
+                let (a_group, b_group) = working_particles.split_at(median_index);
+
+                // CHECK IF A GROUP IS 1, IF SO MAKE LEAF
+
+                // CHEK IF B GROUP IS 1, IF SO MAKE LEAF
+
+                let a_group_aabb = create_aabb_particle_group(&a_group.to_vec());
+                let b_group_aabb = create_aabb_particle_group(&b_group.to_vec());
+
+                let a_area = area(a_group_aabb);
+                let b_area = area(b_group_aabb);
+                if a_area > b_area {
+                    let left_node = Node {
+                        aabb: b_group_aabb,
+                        kind: NodeKind::InternalNode {
+                            parent_index: (),
+                            indeces_of_particle_group: (),
+                            left_child_index: (),
+                            right_child_index: (),
+                        },
+                    };
+                }
+
+                //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
+                //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
+            }
+
+            //     if node
+            NodeKind::InternalNode {
+                parent_index,
+                indeces_of_particle_group,
+                left_child_index,
+                right_child_index,
+            } => {
+                //         split particles at median
+                //             calculate aabb for both halves
+                //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
+                //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
+            }
+            //     if leaf
+            NodeKind::Leaf {
+                parent_index,
+                particle_index,
+            } => {}
+        }
+    }
+    return new_tree;
+}
 
 // TODO have to also be able to move these guys around the tree to reorganize
 fn update_tree_aabbs(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
-    let mut stack: Vec<usize> = (0..tree.len()).collect();
-    let mut current_node_kind = NodeKind::Leaf {
-        parent_index: 0,
-        particle_index: 0,
-    };
+    // let mut stack: Vec<usize> = (0..tree.len()).collect();
+    // let mut current_node_kind = NodeKind::Leaf {
+    //     parent_index: 0,
+    //     particle_index: 0,
+    // };
+
+    let root_index = tree
+        .iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
+        .unwrap()
+        .0;
+    let mut stack = vec![root_index];
     while !stack.is_empty() {
         let current_node_index = stack.pop().unwrap();
-        {
-            current_node_kind = tree[current_node_index].kind.clone()
-        }
+        let current_node_kind = tree[current_node_index].kind.clone();
         match current_node_kind {
             NodeKind::Leaf {
                 parent_index: _,
@@ -142,17 +240,30 @@ fn update_tree_aabbs(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
                     particle_group.push(particles[*index])
                 }
                 tree[current_node_index].aabb = create_aabb_particle_group(&particle_group)
+
+                // calculate new aabb for node
+                // calculate new area for left child
+                // calculage new area for right child
+                // calculate max of these areas
+                // associated node replaces this node
+                // former this node is demoted to where the child node was
             }
             NodeKind::Root {
                 indeces_of_particle_group,
-                left_child_index: _,
-                right_child_index: _,
+                left_child_index,
+                right_child_index,
             } => {
                 let mut particle_group = Vec::new();
                 for index in indeces_of_particle_group.iter() {
                     particle_group.push(particles[*index])
                 }
-                tree[current_node_index].aabb = create_aabb_particle_group(&particle_group)
+                tree[current_node_index].aabb = create_aabb_particle_group(&particle_group);
+                if let Some(left_child_index) = left_child_index {
+                    stack.push(left_child_index)
+                };
+                if let Some(right_child_index) = right_child_index {
+                    stack.push(right_child_index)
+                };
             }
         }
     }
@@ -169,9 +280,6 @@ fn update_tree_when_new_particle(tree: &mut Vec<Node>, particles: &Vec<Particle>
         .unwrap()
         .0;
 
-    // tree.sort_by(|a, b| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap());
-    // tree_len = tree.len();
-
     let mut stack = vec![root_index]; //put root index in there
 
     let new_particle = particles.last().unwrap();
@@ -180,13 +288,8 @@ fn update_tree_when_new_particle(tree: &mut Vec<Node>, particles: &Vec<Particle>
 
     while !stack.is_empty() {
         let current_node_index = stack.pop().unwrap();
-        let mut current_node_kind: NodeKind = NodeKind::Leaf {
-            parent_index: 0,
-            particle_index: 0,
-        };
-        {
-            current_node_kind = tree[current_node_index].kind.clone()
-        }
+
+        let mut current_node_kind = tree[current_node_index].kind.clone();
         // what type of node it is
         match current_node_kind {
             NodeKind::Leaf {
@@ -226,32 +329,6 @@ fn update_tree_when_new_particle(tree: &mut Vec<Node>, particles: &Vec<Particle>
                 };
                 // new_leaf_copy = new_leaf.clone();
                 tree.push(new_leaf);
-
-                // let new_leaf_index = tree.iter().position(|n| n == &new_leaf_copy).unwrap();
-                // let new_node_index = tree.iter().position(|n| n == &new_node_copy).unwrap();
-                // {
-                //     let new_leaf = &mut tree[new_leaf_index];
-
-                //     if let NodeKind::Leaf {
-                //         ref mut parent_index,
-                //         particle_index: _,
-                //     } = new_leaf.kind
-                //     {
-                //         *parent_index = new_node_index;
-                //     }
-                // }
-                // {
-                //     let new_node = &mut tree[new_node_index];
-                //     if let NodeKind::InternalNode {
-                //         parent_index: _,
-                //         indeces_of_particle_group: _,
-                //         left_child_index: _,
-                //         ref mut right_child_index,
-                //     } = new_node.kind
-                //     {
-                //         *right_child_index = new_leaf_index;
-                //     }
-                // }
             }
             NodeKind::InternalNode {
                 parent_index: _,
