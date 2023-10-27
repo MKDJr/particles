@@ -54,28 +54,46 @@ fn which_square_is_particle_in(particles: &Vec<Particle>, grid: Vec<AABB>) -> Ve
     return vec_of_usize_with_id_of_grid_square_particle_is_in;
 }
 
-fn check_for_collisions(vec_of_usize_with_id_of_grid_square_particle_is_in: Vec<usize>, grid: Vec<AABB>, particles: &Vec<Particle>) {
-    
-    let mut collisions = Vec::new()
+fn check_for_collisions(
+    vec_of_usize_with_id_of_grid_square_particle_is_in: Vec<usize>,
+    grid: Vec<AABB>,
+    particles: &Vec<Particle>,
+) {
+    let mut collisions = Vec::new();
 
-    for (square, index) in grid.iter().enumerate() {
-        
-        let clone = particles.clone().retain(|&x| x == index);
+    // for index of grid square, and area...
+    for (index, _square) in grid.iter().enumerate() {
+        // create stack of particles in this grid square
+        let mut set_of_indeces: Vec<usize> =
+            vec_of_usize_with_id_of_grid_square_particle_is_in.clone();
+        set_of_indeces.retain(|&x| x == index);
+        let mut particle_stack = get_vector_subset(particles, &set_of_indeces);
 
         // check which particles intersect
-        while !clone.is_empty() {
-            particle_a = clone.pop();
-            for particle_b in clone.iter() {
-                if intersect(particle_a, particle_b) {
+        while !particle_stack.is_empty() {
+            let particle_a = particle_stack.pop().unwrap();
+            let mut particle_stack_working = particle_stack.clone();
+            for particle_b in particle_stack_working.iter_mut() {
+                if intersect(
+                    create_aabb_particle_owned(particle_a),
+                    create_aabb_particle(particle_b),
+                ) {
                     collisions.push((particle_a, particle_b))
-                }}
+                }
+            }
         }
-
     }
-    
 }
 
 fn create_aabb_particle(particle: &Particle) -> AABB {
+    let bbox = AABB {
+        lower_bound: Vec2::new(particle.pos.x - RADIUS, particle.pos.y - RADIUS),
+        upper_bound: Vec2::new(particle.pos.x + RADIUS, particle.pos.y + RADIUS),
+    };
+    return bbox;
+}
+
+fn create_aabb_particle_owned(particle: Particle) -> AABB {
     let bbox = AABB {
         lower_bound: Vec2::new(particle.pos.x - RADIUS, particle.pos.y - RADIUS),
         upper_bound: Vec2::new(particle.pos.x + RADIUS, particle.pos.y + RADIUS),
