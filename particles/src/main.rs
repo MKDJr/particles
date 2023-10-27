@@ -1,14 +1,14 @@
-use core::num;
+// use core::num;
 use macroquad::prelude::*;
-use ordered_float::{self, OrderedFloat};
-use std::borrow::BorrowMut;
-use std::cmp::max;
-use std::cmp::min;
-use std::collections::*;
+// use ordered_float::{self, OrderedFloat};
+// use std::borrow::BorrowMut;
+// use std::cmp::max;
+// use std::cmp::min;
+// use std::collections::*;
 use std::string::ToString;
-use std::thread::current;
+// use std::thread::current;
 use std::time::Instant;
-use std::{cell::RefCell, rc::Rc};
+// use std::{cell::RefCell, rc::Rc};
 const RADIUS: f32 = 10.;
 
 const COEF_OF_RESTITUTION: f32 = 0.5;
@@ -18,6 +18,61 @@ struct AABB {
     lower_bound: Vec2,
     upper_bound: Vec2,
     // area: area(&self)
+}
+
+fn create_grid(width: f32, height: f32, n_x: i32, n_y: i32) -> Vec<AABB> {
+    let mut grid: Vec<AABB> = Vec::new();
+    for num_x in 0..n_x {
+        for num_y in 0..n_y {
+            grid.push(AABB {
+                lower_bound: Vec2 {
+                    x: (width * num_x as f32 / n_x as f32),
+                    y: (height * num_y as f32 / n_y as f32),
+                },
+                upper_bound: Vec2 {
+                    x: (width * (num_x as f32 + 1.) / n_x as f32),
+                    y: (height * (num_y as f32 + 1.) / n_y as f32),
+                },
+            })
+        }
+    }
+    return grid;
+}
+
+// search grid and create vec for each particle with pointers to the grid square they're in
+fn which_square_is_particle_in(particles: &Vec<Particle>, grid: Vec<AABB>) -> Vec<usize> {
+    let mut vec_of_usize_with_id_of_grid_square_particle_is_in = Vec::new();
+    for particle in particles.iter() {
+        // static
+        for (index, square) in grid.iter().enumerate() {
+            // linear
+            if intersect(create_aabb_particle(particle), *square) {}
+            // could store aabb with particle
+            vec_of_usize_with_id_of_grid_square_particle_is_in.push(index)
+        }
+    }
+    return vec_of_usize_with_id_of_grid_square_particle_is_in;
+}
+
+fn check_for_collisions(vec_of_usize_with_id_of_grid_square_particle_is_in: Vec<usize>, grid: Vec<AABB>, particles: &Vec<Particle>) {
+    
+    let mut collisions = Vec::new()
+
+    for (square, index) in grid.iter().enumerate() {
+        
+        let clone = particles.clone().retain(|&x| x == index);
+
+        // check which particles intersect
+        while !clone.is_empty() {
+            particle_a = clone.pop();
+            for particle_b in clone.iter() {
+                if intersect(particle_a, particle_b) {
+                    collisions.push((particle_a, particle_b))
+                }}
+        }
+
+    }
+    
 }
 
 fn create_aabb_particle(particle: &Particle) -> AABB {
@@ -116,296 +171,296 @@ fn get_vector_subset(vector: &Vec<Particle>, indeces_to_get: &Vec<usize>) -> Vec
     }
     return new_vector;
 }
-fn regenerate_tree(tree: &Vec<Node>, particles: &Vec<Particle>) -> Vec<Node> {
-    let mut new_tree: Vec<Node> = Vec::new();
-    // find root
-    let root_index = tree
-        .iter()
-        .enumerate()
-        .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
-        .unwrap()
-        .0;
 
-    // add root to stack
-    let mut stack = vec![root_index];
+// fn regenerate_tree(tree: &Vec<Node>, particles: &Vec<Particle>) -> Vec<Node> {
+//     let mut new_tree: Vec<Node> = Vec::new();
+//     // find root
+//     let root_index = tree
+//         .iter()
+//         .enumerate()
+//         .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
+//         .unwrap()
+//         .0;
 
-    /*
-    important caveat
+//     // add root to stack
+//     let mut stack = vec![root_index];
 
-    i am creating a new tree here, so for each node we go
-    through in the old tree, we must add one to the new tree
-    */
+//     /*
+//     important caveat
 
-    // iterate through stack
-    while !stack.is_empty() {
-        let current_node_index = stack.pop().unwrap();
+//     i am creating a new tree here, so for each node we go
+//     through in the old tree, we must add one to the new tree
+//     */
+//     // iterate through stack
+//     while !stack.is_empty() {
+//         let current_node_index = stack.pop().unwrap();
 
-        match &tree[current_node_index].kind {
-            // if root
-            NodeKind::Root {
-                indeces_of_particle_group,
-                left_child_index: _,
-                right_child_index: _,
-            } => {
-                // get particles here
-                let mut working_particles = get_vector_subset(particles, indeces_of_particle_group);
+//         match &tree[current_node_index].kind {
+//             // if root
+//             NodeKind::Root {
+//                 indeces_of_particle_group,
+//                 left_child_index: _,
+//                 right_child_index: _,
+//             } => {
+//                 // get particles here
+//                 let mut working_particles = get_vector_subset(particles, indeces_of_particle_group);
 
-                // CHECK IF PARTICLE# IS 1, IF SO, DONE
+//                 // CHECK IF PARTICLE# IS 1, IF SO, DONE
 
-                // split particles at median
-                working_particles.sort_by(|a, b| b.pos.x.partial_cmp(&a.pos.x).unwrap());
-                let median_index = working_particles.len() / 2;
+//                 // split particles at median
+//                 working_particles.sort_by(|a, b| b.pos.x.partial_cmp(&a.pos.x).unwrap());
+//                 let median_index = working_particles.len() / 2;
 
-                // calculate area of aabb for both halves
-                let (a_group, b_group) = working_particles.split_at(median_index);
+//                 // calculate area of aabb for both halves
+//                 let (a_group, b_group) = working_particles.split_at(median_index);
 
-                // CHECK IF A GROUP IS 1, IF SO MAKE LEAF
+//                 // CHECK IF A GROUP IS 1, IF SO MAKE LEAF
 
-                // CHEK IF B GROUP IS 1, IF SO MAKE LEAF
+//                 // CHEK IF B GROUP IS 1, IF SO MAKE LEAF
 
-                let a_group_aabb = create_aabb_particle_group(&a_group.to_vec());
-                let b_group_aabb = create_aabb_particle_group(&b_group.to_vec());
+//                 let a_group_aabb = create_aabb_particle_group(&a_group.to_vec());
+//                 let b_group_aabb = create_aabb_particle_group(&b_group.to_vec());
 
-                let a_area = area(a_group_aabb);
-                let b_area = area(b_group_aabb);
-                if a_area > b_area {
-                    let left_node = Node {
-                        aabb: b_group_aabb,
-                        kind: NodeKind::InternalNode {
-                            parent_index: (),
-                            indeces_of_particle_group: (),
-                            left_child_index: (),
-                            right_child_index: (),
-                        },
-                    };
-                }
+//                 let a_area = area(a_group_aabb);
+//                 let b_area = area(b_group_aabb);
+//                 if a_area > b_area {
+//                     let left_node = Node {
+//                         aabb: b_group_aabb,
+//                         kind: NodeKind::InternalNode {
+//                             parent_index: (),
+//                             indeces_of_particle_group: (),
+//                             left_child_index: (),
+//                             right_child_index: (),
+//                         },
+//                     };
+//                 }
 
-                //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
-                //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
-            }
+//                 //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
+//                 //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
+//             }
 
-            //     if node
-            NodeKind::InternalNode {
-                parent_index,
-                indeces_of_particle_group,
-                left_child_index,
-                right_child_index,
-            } => {
-                //         split particles at median
-                //             calculate aabb for both halves
-                //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
-                //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
-            }
-            //     if leaf
-            NodeKind::Leaf {
-                parent_index,
-                particle_index,
-            } => {}
-        }
-    }
-    return new_tree;
-}
+//             //     if node
+//             NodeKind::InternalNode {
+//                 parent_index,
+//                 indeces_of_particle_group,
+//                 left_child_index,
+//                 right_child_index,
+//             } => {
+//                 //         split particles at median
+//                 //             calculate aabb for both halves
+//                 //             smaller half becomes left child, push to stack as node if #particles > 1, else leaf
+//                 //             bigger half becomes right child, push to stack as node if #particles > 1, else leaf
+//             }
+//             //     if leaf
+//             NodeKind::Leaf {
+//                 parent_index,
+//                 particle_index,
+//             } => {}
+//         }
+//     }
+//     return new_tree;
+// }
 
-// TODO have to also be able to move these guys around the tree to reorganize
-fn update_tree_aabbs(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
-    // let mut stack: Vec<usize> = (0..tree.len()).collect();
-    // let mut current_node_kind = NodeKind::Leaf {
-    //     parent_index: 0,
-    //     particle_index: 0,
-    // };
+// // TODO have to also be able to move these guys around the tree to reorganize
+// fn update_tree_aabbs(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
+//     // let mut stack: Vec<usize> = (0..tree.len()).collect();
+//     // let mut current_node_kind = NodeKind::Leaf {
+//     //     parent_index: 0,
+//     //     particle_index: 0,
+//     // };
 
-    let root_index = tree
-        .iter()
-        .enumerate()
-        .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
-        .unwrap()
-        .0;
-    let mut stack = vec![root_index];
-    while !stack.is_empty() {
-        let current_node_index = stack.pop().unwrap();
-        let current_node_kind = tree[current_node_index].kind.clone();
-        match current_node_kind {
-            NodeKind::Leaf {
-                parent_index: _,
-                particle_index,
-            } => tree[current_node_index].aabb = create_aabb_particle(&particles[particle_index]),
-            NodeKind::InternalNode {
-                parent_index: _,
-                indeces_of_particle_group,
-                left_child_index: _,
-                right_child_index: _,
-            } => {
-                let mut particle_group = Vec::new();
-                for index in indeces_of_particle_group.iter() {
-                    particle_group.push(particles[*index])
-                }
-                tree[current_node_index].aabb = create_aabb_particle_group(&particle_group)
+//     let root_index = tree
+//         .iter()
+//         .enumerate()
+//         .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
+//         .unwrap()
+//         .0;
+//     let mut stack = vec![root_index];
+//     while !stack.is_empty() {
+//         let current_node_index = stack.pop().unwrap();
+//         let current_node_kind = tree[current_node_index].kind.clone();
+//         match current_node_kind {
+//             NodeKind::Leaf {
+//                 parent_index: _,
+//                 particle_index,
+//             } => tree[current_node_index].aabb = create_aabb_particle(&particles[particle_index]),
+//             NodeKind::InternalNode {
+//                 parent_index: _,
+//                 indeces_of_particle_group,
+//                 left_child_index: _,
+//                 right_child_index: _,
+//             } => {
+//                 let mut particle_group = Vec::new();
+//                 for index in indeces_of_particle_group.iter() {
+//                     particle_group.push(particles[*index])
+//                 }
+//                 tree[current_node_index].aabb = create_aabb_particle_group(&particle_group)
 
-                // calculate new aabb for node
-                // calculate new area for left child
-                // calculage new area for right child
-                // calculate max of these areas
-                // associated node replaces this node
-                // former this node is demoted to where the child node was
-            }
-            NodeKind::Root {
-                indeces_of_particle_group,
-                left_child_index,
-                right_child_index,
-            } => {
-                let mut particle_group = Vec::new();
-                for index in indeces_of_particle_group.iter() {
-                    particle_group.push(particles[*index])
-                }
-                tree[current_node_index].aabb = create_aabb_particle_group(&particle_group);
-                if let Some(left_child_index) = left_child_index {
-                    stack.push(left_child_index)
-                };
-                if let Some(right_child_index) = right_child_index {
-                    stack.push(right_child_index)
-                };
-            }
-        }
-    }
-}
+//                 // calculate new aabb for node
+//                 // calculate new area for left child
+//                 // calculage new area for right child
+//                 // calculate max of these areas
+//                 // associated node replaces this node
+//                 // former this node is demoted to where the child node was
+//             }
+//             NodeKind::Root {
+//                 indeces_of_particle_group,
+//                 left_child_index,
+//                 right_child_index,
+//             } => {
+//                 let mut particle_group = Vec::new();
+//                 for index in indeces_of_particle_group.iter() {
+//                     particle_group.push(particles[*index])
+//                 }
+//                 tree[current_node_index].aabb = create_aabb_particle_group(&particle_group);
+//                 if let Some(left_child_index) = left_child_index {
+//                     stack.push(left_child_index)
+//                 };
+//                 if let Some(right_child_index) = right_child_index {
+//                     stack.push(right_child_index)
+//                 };
+//             }
+//         }
+//     }
+// }
 
-fn update_tree_when_new_particle(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
-    let now = Instant::now();
-    // let mut tree_len = 0usize;
+// fn update_tree_when_new_particle(tree: &mut Vec<Node>, particles: &Vec<Particle>) {
+//     let now = Instant::now();
+//     // let mut tree_len = 0usize;
 
-    let root_index = tree
-        .iter()
-        .enumerate()
-        .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
-        .unwrap()
-        .0;
+//     let root_index = tree
+//         .iter()
+//         .enumerate()
+//         .max_by(|(_, a), (_, b)| area(a.aabb).partial_cmp(&area(b.aabb)).unwrap())
+//         .unwrap()
+//         .0;
 
-    let mut stack = vec![root_index]; //put root index in there
+//     let mut stack = vec![root_index]; //put root index in there
 
-    let new_particle = particles.last().unwrap();
-    let new_particle_bbox = create_aabb_particle(new_particle);
-    let new_particle_index = particles.iter().position(|p| p == new_particle);
+//     let new_particle = particles.last().unwrap();
+//     let new_particle_bbox = create_aabb_particle(new_particle);
+//     let new_particle_index = particles.iter().position(|p| p == new_particle);
 
-    while !stack.is_empty() {
-        let current_node_index = stack.pop().unwrap();
+//     while !stack.is_empty() {
+//         let current_node_index = stack.pop().unwrap();
 
-        let mut current_node_kind = tree[current_node_index].kind.clone();
-        // what type of node it is
-        match current_node_kind {
-            NodeKind::Leaf {
-                ref mut parent_index,
-                particle_index,
-            } => {
-                // create new node and make it's leaves the new leaves
+//         let mut current_node_kind = tree[current_node_index].kind.clone();
+//         // what type of node it is
+//         match current_node_kind {
+//             NodeKind::Leaf {
+//                 ref mut parent_index,
+//                 particle_index,
+//             } => {
+//                 // create new node and make it's leaves the new leaves
 
-                let new_internal_node = Node {
-                    aabb: union(new_particle_bbox, tree[current_node_index].aabb),
-                    kind: NodeKind::InternalNode {
-                        parent_index: (*parent_index),
-                        indeces_of_particle_group: (vec![
-                            particle_index,
-                            new_particle_index.unwrap(),
-                        ]),
-                        left_child_index: tree
-                            .iter()
-                            .position(|n| n == &tree[current_node_index])
-                            .unwrap(),
-                        right_child_index: tree.len() + 1,
-                    },
-                };
-                tree.push(new_internal_node);
+//                 let new_internal_node = Node {
+//                     aabb: union(new_particle_bbox, tree[current_node_index].aabb),
+//                     kind: NodeKind::InternalNode {
+//                         parent_index: (*parent_index),
+//                         indeces_of_particle_group: (vec![
+//                             particle_index,
+//                             new_particle_index.unwrap(),
+//                         ]),
+//                         left_child_index: tree
+//                             .iter()
+//                             .position(|n| n == &tree[current_node_index])
+//                             .unwrap(),
+//                         right_child_index: tree.len() + 1,
+//                     },
+//                 };
+//                 tree.push(new_internal_node);
 
-                // make this leaf's parent the new node
-                *parent_index = tree.iter().position(|n| n == tree.last().unwrap()).unwrap();
+//                 // make this leaf's parent the new node
+//                 *parent_index = tree.iter().position(|n| n == tree.last().unwrap()).unwrap();
 
-                // create leaf from new particle
+//                 // create leaf from new particle
 
-                let new_leaf = Node {
-                    aabb: new_particle_bbox,
-                    kind: NodeKind::Leaf {
-                        parent_index: tree.iter().position(|n| n == tree.last().unwrap()).unwrap(),
-                        particle_index: new_particle_index.unwrap(),
-                    },
-                };
-                // new_leaf_copy = new_leaf.clone();
-                tree.push(new_leaf);
-            }
-            NodeKind::InternalNode {
-                parent_index: _,
-                mut indeces_of_particle_group,
-                left_child_index,
-                right_child_index,
-            } => {
-                indeces_of_particle_group.push(new_particle_index.unwrap());
-                //calculate areas
-                let left_theoretical_area =
-                    area(union(new_particle_bbox, tree[left_child_index].aabb));
-                println!("left_theoretical_area: {}", left_theoretical_area);
-                let right_theoretical_area =
-                    area(union(new_particle_bbox, tree[right_child_index].aabb));
-                println!("right_theoretical_area: {}", right_theoretical_area);
+//                 let new_leaf = Node {
+//                     aabb: new_particle_bbox,
+//                     kind: NodeKind::Leaf {
+//                         parent_index: tree.iter().position(|n| n == tree.last().unwrap()).unwrap(),
+//                         particle_index: new_particle_index.unwrap(),
+//                     },
+//                 };
+//                 // new_leaf_copy = new_leaf.clone();
+//                 tree.push(new_leaf);
+//             }
+//             NodeKind::InternalNode {
+//                 parent_index: _,
+//                 mut indeces_of_particle_group,
+//                 left_child_index,
+//                 right_child_index,
+//             } => {
+//                 indeces_of_particle_group.push(new_particle_index.unwrap());
+//                 //calculate areas
+//                 let left_theoretical_area =
+//                     area(union(new_particle_bbox, tree[left_child_index].aabb));
+//                 println!("left_theoretical_area: {}", left_theoretical_area);
+//                 let right_theoretical_area =
+//                     area(union(new_particle_bbox, tree[right_child_index].aabb));
+//                 println!("right_theoretical_area: {}", right_theoretical_area);
 
-                // compare areas
-                if left_theoretical_area > right_theoretical_area {
-                    stack.push(right_child_index);
-                    println!("move to right child");
-                } else {
-                    stack.push(left_child_index);
-                    println!("move to left child");
-                }
-            }
-            NodeKind::Root {
-                mut indeces_of_particle_group,
-                ref mut left_child_index,
-                ref mut right_child_index,
-            } => {
-                // if root, add new particle to indeces stored by root
-                indeces_of_particle_group.push(new_particle_index.unwrap());
+//                 // compare areas
+//                 if left_theoretical_area > right_theoretical_area {
+//                     stack.push(right_child_index);
+//                     println!("move to right child");
+//                 } else {
+//                     stack.push(left_child_index);
+//                     println!("move to left child");
+//                 }
+//             }
+//             NodeKind::Root {
+//                 mut indeces_of_particle_group,
+//                 ref mut left_child_index,
+//                 ref mut right_child_index,
+//             } => {
+//                 // if root, add new particle to indeces stored by root
+//                 indeces_of_particle_group.push(new_particle_index.unwrap());
 
-                //
-                if let (Some(left_child), Some(right_child)) =
-                    (*left_child_index, *right_child_index)
-                {
-                    let left_theoretical_area =
-                        area(union(new_particle_bbox, tree[left_child].aabb));
-                    let right_theoretical_area =
-                        area(union(new_particle_bbox, tree[right_child].aabb));
+//                 //
+//                 if let (Some(left_child), Some(right_child)) =
+//                     (*left_child_index, *right_child_index)
+//                 {
+//                     let left_theoretical_area =
+//                         area(union(new_particle_bbox, tree[left_child].aabb));
+//                     let right_theoretical_area =
+//                         area(union(new_particle_bbox, tree[right_child].aabb));
 
-                    // compare areas
-                    if left_theoretical_area > right_theoretical_area {
-                        stack.push(right_child);
-                    } else {
-                        stack.push(left_child)
-                    }
-                } else if let Some(left_child) = left_child_index {
-                    *right_child_index = new_particle_index;
-                    let new_leaf = Node {
-                        aabb: new_particle_bbox,
-                        kind: NodeKind::Leaf {
-                            parent_index: current_node_index,
-                            particle_index: new_particle_index.unwrap(),
-                        },
-                    };
-                    tree.push(new_leaf)
-                } else {
-                    *left_child_index = new_particle_index;
-                    let new_leaf = Node {
-                        aabb: new_particle_bbox,
-                        kind: NodeKind::Leaf {
-                            parent_index: current_node_index,
-                            particle_index: new_particle_index.unwrap(),
-                        },
-                    };
-                    tree.push(new_leaf)
-                }
-            }
-        }
-    }
-    println!(
-        "{} ns to add new particle to tree",
-        now.elapsed().as_nanos()
-    )
-}
+//                     // compare areas
+//                     if left_theoretical_area > right_theoretical_area {
+//                         stack.push(right_child);
+//                     } else {
+//                         stack.push(left_child)
+//                     }
+//                 } else if let Some(left_child) = left_child_index {
+//                     *right_child_index = new_particle_index;
+//                     let new_leaf = Node {
+//                         aabb: new_particle_bbox,
+//                         kind: NodeKind::Leaf {
+//                             parent_index: current_node_index,
+//                             particle_index: new_particle_index.unwrap(),
+//                         },
+//                     };
+//                     tree.push(new_leaf)
+//                 } else {
+//                     *left_child_index = new_particle_index;
+//                     let new_leaf = Node {
+//                         aabb: new_particle_bbox,
+//                         kind: NodeKind::Leaf {
+//                             parent_index: current_node_index,
+//                             particle_index: new_particle_index.unwrap(),
+//                         },
+//                     };
+//                     tree.push(new_leaf)
+//                 }
+//             }
+//         }
+//     }
+//     println!(
+//         "{} ns to add new particle to tree",
+//         now.elapsed().as_nanos()
+//     )
+// }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 struct Particle {
@@ -465,6 +520,9 @@ fn update(dt: &f32, old_particles: &Vec<Particle>) -> Vec<Particle> {
     for (new_particle, old_particle) in new_particles.iter_mut().zip(old_particles.iter()) {
         handle_wall_collisions(new_particle, old_particle)
     }
+
+    let grid: Vec<AABB> = create_grid(screen_width(), screen_height(), 9, 9);
+    let presence: Vec<usize> = which_square_is_particle_in(&new_particles, grid);
 
     return new_particles;
     // let num_particles = particles.len();
@@ -623,7 +681,7 @@ async fn main() {
                 acc: Vec2::new(0., 9.81),
                 mass: 5.,
             });
-            update_tree_when_new_particle(&mut tree, &particles);
+            // update_tree_when_new_particle(&mut tree, &particles);
         }
 
         let frame_time = get_frame_time();
@@ -638,7 +696,7 @@ async fn main() {
 
         clear_background(LIGHTGRAY);
         particles = update(&dt, &particles);
-        update_tree_aabbs(&mut tree, &particles);
+        // update_tree_aabbs(&mut tree, &particles);
         draw_text(
             &tree.len().to_string(),
             screen_width() - 150.,
