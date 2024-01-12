@@ -1,6 +1,10 @@
 use macroquad::window::{screen_height, screen_width};
 
-use crate::{collision_system::handle_wall_collisions, grid::Grid, Particle};
+use crate::{
+    collision_system::handle_wall_collisions,
+    grid::{update_tiles, Grid},
+    Particle,
+};
 
 pub fn update(dt: &f32, old_particles: Vec<Particle>) -> Vec<Particle> {
     // clone list to get new particle list and return that
@@ -22,6 +26,8 @@ pub fn update(dt: &f32, old_particles: Vec<Particle>) -> Vec<Particle> {
     }
 
     let grid: Grid = Grid::new(screen_width(), screen_height(), 9, 9);
+    let grid: Grid = update_tiles(&new_particles, grid);
+
     // let presence: Vec<usize> = (&new_particles, grid);
 
     return new_particles;
