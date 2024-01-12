@@ -59,7 +59,7 @@ async fn main() {
     let mut particles = Vec::new();
     particles.push(Particle::new(
         Vec2::new(screen_width() / 2., screen_height() / 2.),
-        Vec2::new(50., 50.),
+        Vec2::new(100., 100.),
         Vec2::new(0., 9.81),
         5.,
     ));
@@ -83,7 +83,7 @@ async fn main() {
         if is_mouse_button_down(MouseButton::Left) == true {
             particles.push(Particle::new(
                 Vec2::new(mouse_position().0, mouse_position().1),
-                Vec2::new(500., 5000.),
+                Vec2::new(100., 100.),
                 Vec2::new(0., 9.81),
                 5.,
             ));
