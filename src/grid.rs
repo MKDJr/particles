@@ -1,12 +1,13 @@
 /* -------------------------------------------------------------------------- */
 /*                                 Grid System                                */
 /* -------------------------------------------------------------------------- */
-
 use crate::collision_system::intersect;
 use crate::{Particle, AABB};
 use macroquad::math::Vec2;
 
 pub struct Grid {
+    width: f32,
+    height: f32,
     tiles: Vec<Tile>,
 }
 
@@ -44,7 +45,7 @@ impl Grid {
     }
 }
 
-fn update_tiles(particles: &Vec<Particle>, grid: Grid) -> Grid {
+pub fn update_tiles(particles: &Vec<Particle>, grid: Grid) -> Grid {
     let mut particles: Vec<Particle> = particles.clone();
     let mut grid: Grid = grid;
 
