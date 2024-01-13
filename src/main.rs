@@ -1,5 +1,6 @@
 use macroquad::math::Vec2;
 use macroquad::prelude::*;
+use std::collections::HashMap;
 use std::string::ToString;
 
 mod bounding_box_and_utils;
@@ -16,6 +17,25 @@ struct AABB {
     lower_bound: Vec2,
     upper_bound: Vec2,
     // area: area(&self)
+}
+#[derive(Debug, Clone)]
+
+struct Particles {
+    number: usize,
+    list: HashMap<usize, Particle>,
+}
+
+impl Particles {
+    pub fn new() -> Self {
+        let list = HashMap::new();
+        return Self { number: 0, list };
+    }
+
+    pub fn insert(self: &mut Self, particle: Particle) {
+        let number_of_particles = self.list.len();
+        self.list.insert(number_of_particles + 1, particle);
+        self.number += 1
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -56,8 +76,8 @@ fn get_vector_subset(vector: &Vec<Particle>, indeces_to_get: &Vec<usize>) -> Vec
 
 #[macroquad::main("Particle Simulator")]
 async fn main() {
-    let mut particles = Vec::new();
-    particles.push(Particle::new(
+    let mut particles: Particles = Particles::new();
+    particles.insert(Particle::new(
         Vec2::new(screen_width() / 2., screen_height() / 2.),
         Vec2::new(100., 100.),
         Vec2::new(0., 9.81),
@@ -81,7 +101,7 @@ async fn main() {
 
     loop {
         if is_mouse_button_down(MouseButton::Left) == true {
-            particles.push(Particle::new(
+            particles.insert(Particle::new(
                 Vec2::new(mouse_position().0, mouse_position().1),
                 Vec2::new(100., 100.),
                 Vec2::new(0., 9.81),
