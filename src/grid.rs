@@ -5,18 +5,18 @@ use crate::collision_system::intersect;
 use crate::{Particle, AABB};
 use macroquad::math::Vec2;
 
-pub struct Grid {
-    width: f32,
-    height: f32,
-    tiles: Vec<Tile>,
-}
-
-#[derive(Clone)]
-struct Tile {
+#[derive(Clone, Debug)]
+pub struct Tile {
     x_index: u32,
     y_index: u32,
     bounding_box: AABB,
-    particles: Option<Vec<Particle>>,
+    pub particles: Option<Vec<Particle>>,
+}
+#[derive(Clone, Debug)]
+pub struct Grid {
+    // width: f32,
+    // height: f32,
+    pub tiles: Vec<Tile>,
 }
 
 impl Grid {
@@ -43,28 +43,28 @@ impl Grid {
         }
         return Self { tiles };
     }
-}
 
-pub fn update_tiles(particles: &Vec<Particle>, grid: Grid) -> Grid {
-    let mut particles: Vec<Particle> = particles.clone();
-    let mut grid: Grid = grid;
+    pub fn update_tiles(self: &Self, particles: &Vec<Particle>) -> Self {
+        let mut particles: Vec<Particle> = particles.clone();
+        let mut grid: Grid = self.clone();
+        let mut new_tiles: Vec<Tile> = Vec::new();
 
-    let mut updated_grid: Grid = Grid { tiles: Vec::new() };
+        while let Some(tile) = grid.tiles.pop() {
+            let mut updated_tile: Tile = tile.clone();
 
-    while let Some(tile) = grid.tiles.pop() {
-        let mut updated_tile: Tile = tile.clone();
+            while let Some(particle) = particles.pop() {
+                let mut current_particles_list: Vec<Particle> = Vec::new();
 
-        while let Some(particle) = particles.pop() {
-            let mut current_particles_list: Vec<Particle> = Vec::new();
-
-            if intersect(particle.bounding_box, tile.bounding_box) {
-                current_particles_list.push(particle)
+                if intersect(particle.bounding_box, tile.bounding_box) {
+                    current_particles_list.push(particle)
+                }
+                updated_tile.particles = Some(current_particles_list);
             }
-            updated_tile.particles = Some(current_particles_list);
+            new_tiles.push(updated_tile)
         }
-        updated_grid.tiles.push(updated_tile)
+        // return updated_grid;
+        return Self { tiles: new_tiles };
     }
-    return updated_grid;
 }
 
 // Hey! I have a grid for the windows with indeces and bounding boxes.
