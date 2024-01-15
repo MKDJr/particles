@@ -1,72 +1,74 @@
+use std::collections::HashMap;
+
 /* -------------------------------------------------------------------------- */
 /*                                 Grid System                                */
 /* -------------------------------------------------------------------------- */
 use crate::collision_system::intersect;
-use crate::{Particle, AABB};
+use crate::{Particles, AABB};
 use macroquad::math::Vec2;
 
 #[derive(Clone, Debug)]
 pub struct Tile {
-    x_index: u32,
-    y_index: u32,
     bounding_box: AABB,
-    pub particles: Option<Vec<Particle>>,
+    pub particle_idxs: Vec<usize>,
 }
 #[derive(Clone, Debug)]
 pub struct Grid {
-    // width: f32,
-    // height: f32,
-    pub tiles: Vec<Tile>,
+    width: f32,
+    height: f32,
+    pub tiles: HashMap<usize, Tile>,
 }
 
 impl Grid {
-    pub fn new(width: f32, height: f32, n_x: u32, n_y: u32) -> Self {
-        let mut tiles: Vec<Tile> = Vec::new();
+    pub fn new(width: f32, height: f32, n_x: usize, n_y: usize) -> Self {
+        let mut tiles = HashMap::new();
         for num_x in 0..n_x {
             for num_y in 0..n_y {
-                tiles.push(Tile {
-                    x_index: num_x,
-                    y_index: num_y,
-                    bounding_box: AABB {
-                        lower_bound: Vec2 {
-                            x: (width * num_x as f32 / n_x as f32),
-                            y: (height * num_y as f32 / n_y as f32),
+                tiles.insert(
+                    num_x * n_y + num_y,
+                    Tile {
+                        bounding_box: AABB {
+                            lower_bound: Vec2 {
+                                x: (width * num_x as f32 / n_x as f32),
+                                y: (height * num_y as f32 / n_y as f32),
+                            },
+                            upper_bound: Vec2 {
+                                x: (width * (num_x as f32 + 1.) / n_x as f32),
+                                y: (height * (num_y as f32 + 1.) / n_y as f32),
+                            },
                         },
-                        upper_bound: Vec2 {
-                            x: (width * (num_x as f32 + 1.) / n_x as f32),
-                            y: (height * (num_y as f32 + 1.) / n_y as f32),
-                        },
+                        particle_idxs: Vec::new(),
                     },
-                    particles: None,
+                );
+            }
+        }
+        return Self {
+            width,
+            height,
+            tiles,
+        };
+    }
+
+    pub fn update_tiles(self: &Self, particles: &Particles) -> Self {
+        let mut working_particle_list = particles.list.clone();
+        let mut working_tiles = self.tiles.clone();
+
+        for (idx, particle) in working_particle_list.drain() {
+            for k in 0..working_tiles.len() {
+                working_tiles.entry(k).and_modify(|tile| {
+                    if intersect(particle.bounding_box, tile.bounding_box) {
+                        tile.particle_idxs.push(idx);
+                    }
                 });
             }
         }
-        return Self { tiles };
-    }
-
-    pub fn update_tiles(self: &Self, particles: &Vec<Particle>) -> Self {
-        let mut particles: Vec<Particle> = particles.clone();
-        let mut grid: Grid = self.clone();
-        let mut new_tiles: Vec<Tile> = Vec::new();
-
-        while let Some(tile) = grid.tiles.pop() {
-            let mut updated_tile: Tile = tile.clone();
-
-            while let Some(particle) = particles.pop() {
-                let mut current_particles_list: Vec<Particle> = Vec::new();
-
-                if intersect(particle.bounding_box, tile.bounding_box) {
-                    current_particles_list.push(particle)
-                }
-                updated_tile.particles = Some(current_particles_list);
-            }
-            new_tiles.push(updated_tile)
-        }
-        // return updated_grid;
-        return Self { tiles: new_tiles };
+        return Grid {
+            width: self.width,
+            height: self.height,
+            tiles: working_tiles,
+        };
     }
 }
-
 // Hey! I have a grid for the windows with indeces and bounding boxes.
 // If you give me a list of particles, I'll tell you which ones are in the same grid square so you can check them for collissions.
 // I just need to borrow the particles, I won't be changing them.

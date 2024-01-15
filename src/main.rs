@@ -66,48 +66,26 @@ impl Particle {
     }
 }
 
-fn get_vector_subset(vector: &Vec<Particle>, indeces_to_get: &Vec<usize>) -> Vec<Particle> {
-    let mut new_vector = Vec::new();
-    for index in indeces_to_get.iter() {
-        new_vector.push(vector[*index])
-    }
-    return new_vector;
-}
-
 #[macroquad::main("Particle Simulator")]
 async fn main() {
-    let mut particles: Particles = Particles::new();
-    particles.insert(Particle::new(
-        Vec2::new(screen_width() / 2., screen_height() / 2.),
-        Vec2::new(100., 100.),
-        Vec2::new(0., 9.81),
-        5.,
-    ));
+    std::env::set_var("RUST_BACKTRACE", "1");
+
     let frame_rate: f32 = 100.;
     let dt: f32 = 1. / frame_rate;
-    // let mut tree = vec![Node {
-    //     aabb: create_aabb_particle_group(&particles),
-    //     kind: NodeKind::Root {
-    //         indeces_of_particle_group: (0..particles.len()).collect(),
-    //         left_child_index: None,
-    //         right_child_index: None,
-    //     },
-    // }];
-    // aabb: create_aabb_particle_group(&particles),
-    // particle_index: particles
-    //     .iter()
-    //     .position(|&p| p == *particles.last().unwrap())
-    //     .unwrap(),;
+
+    let mut particles = Particles::new();
 
     loop {
         if is_mouse_button_down(MouseButton::Left) == true {
             particles.insert(Particle::new(
                 Vec2::new(mouse_position().0, mouse_position().1),
-                Vec2::new(100., 100.),
+                Vec2::new(
+                    1000. * mouse_delta_position().x,
+                    1000. * mouse_delta_position().y,
+                ),
                 Vec2::new(0., 9.81),
                 5.,
             ));
-            // update_tree_when_new_particle(&mut tree, &particles);
         }
 
         let frame_time = get_frame_time();
@@ -121,7 +99,10 @@ async fn main() {
         }
 
         clear_background(LIGHTGRAY);
-        particles = update::update(&dt, particles);
+
+        let frozen_particles = particles.clone();
+        particles = update::update_world(&dt, frozen_particles);
+
         // update_tree_aabbs(&mut tree, &particles);
         // draw_text(
         //     &tree.len().to_string(),
@@ -142,7 +123,7 @@ async fn main() {
         //     )
         // }
 
-        for particle in particles.iter() {
+        for (idx, particle) in particles.list.iter() {
             draw_circle(particle.pos.x, particle.pos.y, RADIUS, WHITE);
 
             // pos line
@@ -166,17 +147,18 @@ async fn main() {
                 5.,
                 BLUE,
             );
-            draw_text(
-                &particle.pos.x.to_string(),
-                particle.pos.x,
-                particle.pos.y,
-                50.,
-                ORANGE,
-            );
+            // pos
+            // draw_text(
+            //     &particle.pos.x.to_string(),
+            //     particle.pos.x,
+            //     particle.pos.y,
+            //     50.,
+            //     ORANGE,
+            // );
         }
 
         draw_text(
-            &particles.len().to_string(),
+            &particles.list.len().to_string(),
             screen_width() - 150.,
             screen_height() - 50.,
             100.,
