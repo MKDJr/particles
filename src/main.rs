@@ -58,10 +58,13 @@ async fn main() {
     let dt: f32 = 1. / frame_rate;
 
     let mut particles = Particles::new();
-
+    let dur = 0.2;
+    let mut curr = 0.;
     loop {
+        if dur < curr {
+            curr = 0.;
         if is_mouse_button_down(MouseButton::Left) == true {
-            particles.insert(Particle::new(
+                particles.push(Particle::new(
                 Vec2::new(mouse_position().0, mouse_position().1),
                 Vec2::new(
                     1000. * mouse_delta_position().x,
@@ -70,6 +73,7 @@ async fn main() {
                 Vec2::new(0., 9.81),
                 5.,
             ));
+            }
         }
 
         let frame_time = get_frame_time();
