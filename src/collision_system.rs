@@ -1,7 +1,9 @@
 use macroquad::math::Vec2;
+
 use crate::{screen_height, screen_width, Particle, AABB, COEF_OF_RESTITUTION, RADIUS};
 
-pub fn handle_wall_collisions(new_particle: &mut Particle, old_particle: &Particle) {
+pub fn handle_wall_collisions(curr_particle: &Particle, old_particle: &Particle) -> Particle {
+    let mut new_particle = curr_particle.clone();
     if new_particle.pos.y - RADIUS < 0. {
         new_particle.vel.y = -new_particle.vel.y * COEF_OF_RESTITUTION;
 
@@ -47,6 +49,7 @@ pub fn handle_wall_collisions(new_particle: &mut Particle, old_particle: &Partic
             - (1. - fraction_of_trajectory_before_collision)
                 * (new_particle.pos.x - old_particle.pos.x);
     }
+    return new_particle;
 }
 
 // Return "true" if two bounding boxes intersect, return "false" otherwise.
