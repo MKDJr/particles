@@ -1,6 +1,5 @@
-use macroquad::math::Vec2;
-
 use crate::{screen_height, screen_width, Particle, AABB, COEF_OF_RESTITUTION, RADIUS};
+use macroquad::math::Vec2;
 
 pub fn handle_wall_collisions(curr_particle: &Particle, old_particle: &Particle) -> Particle {
     let mut new_particle = curr_particle.clone();
