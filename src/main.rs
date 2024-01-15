@@ -1,6 +1,5 @@
 use macroquad::math::Vec2;
 use macroquad::prelude::*;
-use std::collections::HashMap;
 use std::string::ToString;
 
 mod bounding_box_and_utils;
@@ -18,25 +17,8 @@ struct AABB {
     upper_bound: Vec2,
     // area: area(&self)
 }
-#[derive(Debug, Clone)]
 
-struct Particles {
-    number: usize,
-    list: HashMap<usize, Particle>,
-}
-
-impl Particles {
-    pub fn new() -> Self {
-        let list = HashMap::new();
-        return Self { number: 0, list };
-    }
-
-    pub fn insert(self: &mut Self, particle: Particle) {
-        let number_of_particles = self.list.len();
-        self.list.insert(number_of_particles + 1, particle);
-        self.number += 1
-    }
-}
+type Particles = Vec<Particle>;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 struct Particle {
