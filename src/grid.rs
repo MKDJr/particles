@@ -10,7 +10,6 @@ use macroquad::math::Vec2;
 #[derive(Clone, Debug)]
 pub struct Tile {
     bounding_box: AABB,
-    pub particle_idxs: Vec<usize>,
 }
 #[derive(Clone, Debug)]
 pub struct Grid {

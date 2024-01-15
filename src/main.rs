@@ -31,6 +31,7 @@ struct Particle {
     mass: f32,
     radius: f32,
     bounding_box: AABB,
+    tile: Option<usize>,
 }
 
 impl Particle {
@@ -44,6 +45,7 @@ impl Particle {
             mass,
             radius,
             bounding_box,
+            tile: None,
         }
     }
 }
