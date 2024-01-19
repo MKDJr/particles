@@ -1,9 +1,14 @@
+#![feature(slice_group_by)]
+
+use ::rand::thread_rng;
+use ::rand::Rng;
 use macroquad::math::Vec2;
 use macroquad::prelude::*;
 use std::string::ToString;
-
 mod bounding_box_and_utils;
 use bounding_box_and_utils::create_aabb;
+
+use crate::grid::draw_bb;
 mod collision_system;
 mod grid;
 mod update;
@@ -57,27 +62,39 @@ async fn main() {
     let frame_rate: f32 = 100.;
     let dt: f32 = 1. / frame_rate;
 
-    let mut particles = Particles::new();
-    let dur = 0.2;
-    let mut curr = 0.;
+    let mut particles: Particles = Particles::new();
+    let dur: f32 = 1.;
+    let mut curr: f32 = 0.;
     loop {
         if dur < curr {
-            curr = 0.;
-        if is_mouse_button_down(MouseButton::Left) == true {
+            if is_mouse_button_down(MouseButton::Left) == true {
                 particles.push(Particle::new(
-                Vec2::new(mouse_position().0, mouse_position().1),
-                Vec2::new(
-                    1000. * mouse_delta_position().x,
-                    1000. * mouse_delta_position().y,
-                ),
-                Vec2::new(0., 9.81),
-                5.,
-            ));
+                    Vec2::new(mouse_position().0, mouse_position().1),
+                    Vec2::new(
+                        1000. * thread_rng().gen_range(-1.0..1.0),
+                        1000. * thread_rng().gen_range(-1.0..1.0),
+                    ),
+                    Vec2::new(0., 9.81),
+                    5.,
+                ));
+                curr = 0.;
+            } else {
+                // particles.push(Particle::new(
+                //     Vec2::new(100f32, 100f32),
+                //     Vec2::new(
+                //         1000. * thread_rng().gen_range(-1.0..1.0),
+                //         1000. * thread_rng().gen_range(-1.0..1.0),
+                //     ),
+                //     Vec2::new(0., 9.81),
+                //     5.,
+                // ))
             }
         }
 
-        let frame_time = get_frame_time();
-        let fps = 1. / frame_time;
+        let frame_time: f32 = get_frame_time();
+        let fps: f32 = 1. / frame_time;
+
+        curr += frame_time;
 
         println!("Frame time: {}ms", frame_time * 1000.);
         if frame_time < dt {
@@ -88,7 +105,7 @@ async fn main() {
 
         clear_background(LIGHTGRAY);
 
-        let frozen_particles = particles.clone();
+        let frozen_particles: Particles = particles.clone();
         particles = update::update_world(&dt, frozen_particles);
 
         // update_tree_aabbs(&mut tree, &particles);
@@ -111,13 +128,15 @@ async fn main() {
         //     )
         // }
 
-        for (idx, particle) in particles.list.iter() {
+        for particle in particles.iter() {
             draw_circle(particle.pos.x, particle.pos.y, RADIUS, WHITE);
 
             // pos line
             // draw_line(0., 0., particle.pos.x, particle.pos.y, 5., BLACK);
-
             // vel line
+
+            draw_bb(particle.bounding_box, BLACK);
+
             draw_line(
                 particle.pos.x,
                 particle.pos.y,
@@ -146,7 +165,7 @@ async fn main() {
         }
 
         draw_text(
-            &particles.list.len().to_string(),
+            &particles.len().to_string(),
             screen_width() - 150.,
             screen_height() - 50.,
             100.,

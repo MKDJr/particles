@@ -67,10 +67,10 @@ pub fn intersect(a: AABB, b: AABB) -> bool {
 }
 
 pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Vec2, Vec2) {
-    let collision_vector = Vec2 {
-        x: (b.pos.x - a.pos.x),
-        y: (b.pos.y - a.pos.y),
-    };
+    // let collision_vector = Vec2 {
+    //     x: (b.pos.x - a.pos.x),
+    //     y: (b.pos.y - a.pos.y),
+    // };
 
     let new_a_vel = a.vel
         - (2. * b.mass / (a.mass + b.mass))
