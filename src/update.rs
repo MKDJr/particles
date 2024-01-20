@@ -1,10 +1,9 @@
 use crate::{
     collision_system::{handle_particle_collision, handle_wall_collisions, intersect},
-    grid::{draw_bb, Grid},
+    grid::Grid,
     Particle, Particles,
 };
 use macroquad::{
-    color::BLUE,
     math::Vec2,
     window::{screen_height, screen_width},
 };
@@ -32,9 +31,6 @@ pub fn update_world(dt: &f32, frozen_particles: Particles) -> Particles {
     // dbg!(&walled_particles.len());
 
     let grid: Grid = Grid::new(screen_width(), screen_height(), 3, 3);
-    for tile in grid.tiles.clone().drain(..) {
-        draw_bb(tile.bounding_box, BLUE);
-    }
 
     let gridded_particles: Particles = grid.update_paricle_locations_in_grid(&walled_particles);
     // dbg!(&gridded_particles.len());
@@ -83,6 +79,16 @@ fn update_particles_for_wall_conditions(
     return walled_particles;
 }
 
+// There is a list of particles.
+// I want to take one particle out of the list.
+// And compare each of the OTHER particles to this particle.
+// If they collide:
+//   Calculate the new velocities and positions
+//   Store these
+//
+
+//
+
 fn update_particles_for_particle_collision(old_particles: Particles) -> Particles {
     let mut new_particles: Particles = Particles::new();
 
@@ -92,33 +98,61 @@ fn update_particles_for_particle_collision(old_particles: Particles) -> Particle
     }
 
     let mut particles_grouped_by_tile: Vec<Particles> = group(&old_particles);
-    while let Some(mut working_particles) = particles_grouped_by_tile.pop() {
-        dbg!(working_particles.len());
+    while let Some(mut particles_in_tile) = particles_grouped_by_tile.pop() {
+        // dbg!(particles_in_tile.len());
 
         // of particles in a tile, select one
-        while let Some(particle) = working_particles.pop() {
-            let mut others: Particles = working_particles.clone();
-            dbg!(others.len());
 
-            // other tiles not covered
-            while let Some(other) = others.pop() {
-                // Check if they intersect
-                if dbg!(intersect(particle.bounding_box, other.bounding_box)) {
-                    // If so, calculate their new attributes
-                    let (new_a_vel, new_b_vel) = handle_particle_collision(&particle, &other);
-                    let mut a = particle.clone();
-                    a.vel = new_a_vel;
-                    new_particles.push(a);
+        // If there's more than one particle in this tile
+        // if particles_in_tile.len() > 1 {
+        // Take one particle out
+        while let Some(particle) = particles_in_tile.pop() {
+            let mut others: Particles = particles_in_tile.clone();
 
-                    let mut b = other.clone();
-                    b.vel = new_b_vel;
-                    new_particles.push(b);
+            if others.is_empty() {
+                new_particles.push(particle)
+            } else {
+                let mut counter = 0;
+                // compare the particle to all other particles yet to be popped
+                while let Some(other) = others.pop() {
+                    // Check if they intersect
+                    if intersect(particle.bounding_box, other.bounding_box) {
+                        // If so, calculate their new attributes
+                        let //(
+                            (new_a_vel, new_b_vel)//, (new_a_pos, new_b_pos))
+                         =
+                            handle_particle_collision(&particle, &other);
+                        let mut a = particle.clone();
+                        a.vel = new_a_vel;
+                        // a.pos = new_a_pos;
+                        new_particles.push(a);
 
-                    working_particles.retain(|&x| x != b); // find b and pop
-                    break;
+                        let mut b = other.clone();
+                        b.vel = new_b_vel;
+                        // b.pos = new_b_pos;
+                        new_particles.push(b);
+
+                        let old_b = other.clone();
+                        // dbg!(&particles_in_tile.len());
+                        // dbg!(particles_in_tile.contains(&old_b));
+                        particles_in_tile.retain(|&x| x != old_b); // find old_b and pop
+                                                                   // dbg!(&particles_in_tile.len());
+                                                                   // dbg!(particles_in_tile.contains(&old_b));
+                        counter = 1;
+                        break;
+                    }
+                }
+                // If there were NO intersections, just push the particle as it was.
+                if counter == 0 {
+                    new_particles.push(particle)
                 }
             }
         }
+        // }
+        // // If there's only one particle in this tile:
+        // else {
+        //     new_particles.push(particles_in_tile[0])
+        // }
     }
     if new_particles.len() != old_particles.len() {
         dbg!(new_particles.len());
@@ -130,36 +164,36 @@ fn update_particles_for_particle_collision(old_particles: Particles) -> Particle
     return new_particles;
 }
 
-fn combos(particles: &Particles) -> Vec<Particles> {
-    let mut working_particles: Particles = particles.clone();
-    let mut combos: Vec<Particles> = Vec::new();
+// fn combos(particles: &Particles) -> Vec<Particles> {
+//     let mut working_particles: Particles = particles.clone();
+//     let mut combos: Vec<Particles> = Vec::new();
 
-    // dbg!(working_particles.len());
-    while let Some(a) = working_particles.pop() {
-        // dbg!(a);
-        let mut temp_particles: Particles = working_particles.clone();
-        // dbg!(temp_particles.len());
-        while let Some(b) = temp_particles.pop() {
-            // dbg!(b);
-            let mut temp: Particles = Particles::new();
-            temp.push(a);
-            temp.push(b);
-            combos.push(temp);
-        }
-    }
-    {
-        let len = particles.len();
-        // dbg!(len);
-        let num = len * (len - 1) / 2;
-        // dbg!(num);
-        if combos.len() != num {
-            let e = 4;
-            println!("{}", e);
-            exit(e);
-        };
-    }
-    return combos;
-}
+//     // dbg!(working_particles.len());
+//     while let Some(a) = working_particles.pop() {
+//         // dbg!(a);
+//         let mut temp_particles: Particles = working_particles.clone();
+//         // dbg!(temp_particles.len());
+//         while let Some(b) = temp_particles.pop() {
+//             // dbg!(b);
+//             let mut temp: Particles = Particles::new();
+//             temp.push(a);
+//             temp.push(b);
+//             combos.push(temp);
+//         }
+//     }
+//     {
+//         let len = particles.len();
+//         // dbg!(len);
+//         let num = len * (len - 1) / 2;
+//         // dbg!(num);
+//         if combos.len() != num {
+//             let e = 4;
+//             println!("{}", e);
+//             exit(e);
+//         };
+//     }
+//     return combos;
+// }
 
 fn group(particles: &Particles) -> Vec<Particles> {
     let mut sorted_particles: Particles = particles.clone();

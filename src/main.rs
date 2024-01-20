@@ -1,5 +1,3 @@
-#![feature(slice_group_by)]
-
 use ::rand::thread_rng;
 use ::rand::Rng;
 use macroquad::math::Vec2;
@@ -8,13 +6,15 @@ use std::string::ToString;
 mod bounding_box_and_utils;
 use bounding_box_and_utils::create_aabb;
 
-use crate::grid::draw_bb;
+use crate::grid::Grid;
+use crate::utils::draw_bb;
 mod collision_system;
 mod grid;
 mod update;
+mod utils;
 
-const RADIUS: f32 = 10.;
-const COEF_OF_RESTITUTION: f32 = 0.5;
+const RADIUS: f32 = 25.;
+const COEF_OF_RESTITUTION: f32 = 0.95;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 struct AABB {
@@ -41,7 +41,7 @@ struct Particle {
 
 impl Particle {
     fn new(pos: Vec2, vel: Vec2, acc: Vec2, mass: f32) -> Self {
-        let radius = 5.0;
+        let radius = RADIUS;
         let bounding_box = create_aabb(pos.x, pos.y, radius);
         Self {
             pos,
@@ -96,10 +96,10 @@ async fn main() {
 
         curr += frame_time;
 
-        println!("Frame time: {}ms", frame_time * 1000.);
+        // println!("Frame time: {}ms", frame_time * 1000.);
         if frame_time < dt {
             let time_to_sleep = (dt - frame_time) * 1000.;
-            println!("Sleep for {}ms", time_to_sleep);
+            // println!("Sleep for {}ms", time_to_sleep);
             std::thread::sleep(std::time::Duration::from_millis(time_to_sleep as u64));
         }
 
@@ -108,34 +108,27 @@ async fn main() {
         let frozen_particles: Particles = particles.clone();
         particles = update::update_world(&dt, frozen_particles);
 
-        // update_tree_aabbs(&mut tree, &particles);
-        // draw_text(
-        //     &tree.len().to_string(),
-        //     screen_width() - 150.,
-        //     50.,
-        //     100.,
-        //     BLUE,
-        // );
-
-        // for node in tree.iter() {
-        //     draw_rectangle_lines(
-        //         node.aabb.lower_bound.x,
-        //         node.aabb.lower_bound.y,
-        //         node.aabb.upper_bound.x - node.aabb.lower_bound.x,
-        //         node.aabb.upper_bound.y - node.aabb.lower_bound.y,
-        //         5.,
-        //         BLACK,
-        //     )
-        // }
-
+        let mut grid = Grid::new(screen_width(), screen_height(), 3, 3);
+        let mut i = 0;
+        while let Some(tile) = grid.tiles.pop() {
+            draw_text(
+                &i.to_string(),
+                tile.bounding_box.lower_bound.x + 100.,
+                tile.bounding_box.lower_bound.y + 100.,
+                50.,
+                RED,
+            );
+            draw_bb(tile.bounding_box, BLUE);
+            i += 1;
+        }
         for particle in particles.iter() {
-            draw_circle(particle.pos.x, particle.pos.y, RADIUS, WHITE);
+            draw_circle(particle.pos.x, particle.pos.y, particle.radius, WHITE);
 
             // pos line
             // draw_line(0., 0., particle.pos.x, particle.pos.y, 5., BLACK);
             // vel line
 
-            draw_bb(particle.bounding_box, BLACK);
+            draw_bb(particle.bounding_box, BLUE);
 
             draw_line(
                 particle.pos.x,

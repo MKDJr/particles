@@ -5,33 +5,22 @@ use std::process::exit;
 /* -------------------------------------------------------------------------- */
 use crate::collision_system::intersect;
 use crate::{Particles, AABB};
-use macroquad::color::Color;
 use macroquad::math::Vec2;
-use macroquad::shapes::draw_rectangle;
 
 #[derive(Clone, Debug)]
 pub struct Tile {
     pub index: usize,
     pub bounding_box: AABB,
-    num_particles: Option<usize>,
+    // num_particles: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Grid {
-    width: f32,
-    height: f32,
+    // width: f32,
+    // height: f32,
     pub tiles: Vec<Tile>,
 }
 
-pub fn draw_bb(bounding_box: AABB, color: Color) {
-    draw_rectangle(
-        bounding_box.lower_bound.x,
-        bounding_box.lower_bound.y,
-        bounding_box.upper_bound.x - bounding_box.lower_bound.x,
-        bounding_box.upper_bound.y - bounding_box.lower_bound.y,
-        color,
-    )
-}
 impl Grid {
     pub fn new(width: f32, height: f32, n_x: usize, n_y: usize) -> Self {
         let mut tiles = Vec::new();
@@ -49,18 +38,19 @@ impl Grid {
                             y: (height * (num_y as f32 + 1.) / n_y as f32),
                         },
                     },
-                    num_particles: None,
+                    // num_particles: None,
                 });
             }
         }
         return Self {
-            width,
-            height,
+            // width,
+            // height,
             tiles,
         };
     }
 
     pub fn update_paricle_locations_in_grid(self: &Self, particles: &Particles) -> Particles {
+        let old_particles: Particles = particles.clone();
         let mut new_particles: Particles = Vec::new();
 
         let mut working_particles: Particles = particles.clone();
@@ -76,6 +66,8 @@ impl Grid {
             }
         }
         if new_particles.len() != particles.len() {
+            dbg!(new_particles.len());
+            dbg!(old_particles.len());
             let e = 1;
             println!("{}", e);
             exit(e);
