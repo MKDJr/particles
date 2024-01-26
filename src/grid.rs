@@ -3,7 +3,7 @@ use std::process::exit;
 /* -------------------------------------------------------------------------- */
 /*                                 Grid System                                */
 /* -------------------------------------------------------------------------- */
-use crate::collision_system::intersect;
+use crate::collision_system::{bbox_intersect, point_intersect};
 use crate::{Particles, AABB};
 use macroquad::math::Vec2;
 
@@ -50,18 +50,26 @@ impl Grid {
     }
 
     pub fn update_paricle_locations_in_grid(self: &Self, particles: &Particles) -> Particles {
-        let old_particles: Particles = particles.clone();
+        // The new particles
         let mut new_particles: Particles = Vec::new();
 
+        // Store old particles for comparison and popping
+        let old_particles: Particles = particles.clone();
         let mut working_particles: Particles = particles.clone();
-        for particle in working_particles.drain(..) {
+
+        while let Some(particle) = working_particles.pop() {
+            println!("---------- PARTICLE ------------");
+            dbg!(particle.pos);
             let mut working_tiles: Vec<Tile> = self.tiles.clone();
-            for tile in working_tiles.drain(..) {
-                if intersect(particle.bounding_box, tile.bounding_box) {
+            while let Some(tile) = working_tiles.pop() {
+                if point_intersect(&particle, &tile.bounding_box) {
                     let mut clone = particle.clone();
                     clone.tile = Some(tile.index);
+                    println!("----------- TILE ------------");
+                    dbg!(tile.index);
+                    dbg!(tile.bounding_box);
                     new_particles.push(clone);
-                    break;
+                    // break;
                 }
             }
         }
