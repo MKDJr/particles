@@ -89,16 +89,13 @@ pub fn point_intersect(a: &Particle, b: &AABB) -> bool {
 pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Particle, Particle) //,(Vec2, Vec2))
 {
     let d_intersect = a.pos.distance(b.pos);
-    let d_min = a.radius + b.radius;
+    let d_min: f32 = a.radius + b.radius;
 
     let t = (d_min - (a.pos - b.pos)) / (a.vel - b.vel);
     dbg!(t);
 
     let (mut a_collision, mut b_collision) = (a.clone(), b.clone());
-    (a_collision.pos, b_collision.pos) = (
-        a_collision.pos - a_collision.vel * t,
-        b_collision.pos - b_collision.vel * t,
-    );
+    (a_collision.pos, b_collision.pos) = (a.pos - a.vel * t, b.pos - b.vel * t);
 
     let (new_a_vel, new_b_vel) = calculate_post_collision_velocity(a, b);
 
