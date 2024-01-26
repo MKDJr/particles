@@ -1,5 +1,5 @@
 use crate::{
-    collision_system::{handle_particle_collision, handle_wall_collisions, intersect},
+    collision_system::{bbox_intersect, handle_particle_collision, handle_wall_collisions},
     grid::Grid,
     Particle, Particles,
 };
@@ -9,7 +9,7 @@ use macroquad::{
 };
 use std::process::exit;
 
-pub fn update_world(dt: &f32, frozen_particles: Particles) -> Particles {
+pub fn update_world(dt: &f32, frozen_particles: Particles, grid: &Grid) -> Particles {
     // This function updates the world state by `dt` time.
     // It takes ownership of the frozen particle state.
     // It returns a new set of particles to `main` which have been updated to the next tick.
@@ -30,14 +30,17 @@ pub fn update_world(dt: &f32, frozen_particles: Particles) -> Particles {
 
     // dbg!(&walled_particles.len());
 
-    let grid: Grid = Grid::new(screen_width(), screen_height(), 3, 3);
-
     let gridded_particles: Particles = grid.update_paricle_locations_in_grid(&walled_particles);
     // dbg!(&gridded_particles.len());
 
+    let temp_gridded_particles = gridded_particles.clone();
     // Drain a clone of the tiles
-    let new_particles: Particles = update_particles_for_particle_collision(gridded_particles);
+    let collided_particles: Particles = update_particles_for_particle_collision(gridded_particles);
     // dbg!(&new_particles.len());
+
+    // Check if particles collide with the wall and handle.
+    let new_particles: Particles =
+        update_particles_for_wall_conditions(collided_particles.clone(), temp_gridded_particles);
 
     return new_particles;
 }
@@ -116,20 +119,14 @@ fn update_particles_for_particle_collision(old_particles: Particles) -> Particle
                 // compare the particle to all other particles yet to be popped
                 while let Some(other) = others.pop() {
                     // Check if they intersect
-                    if intersect(particle.bounding_box, other.bounding_box) {
+                    if bbox_intersect(&particle.bounding_box, &other.bounding_box) {
                         // If so, calculate their new attributes
                         let //(
-                            (new_a_vel, new_b_vel)//, (new_a_pos, new_b_pos))
+                            (a, b)//, (new_a_pos, new_b_pos))
                          =
                             handle_particle_collision(&particle, &other);
-                        let mut a = particle.clone();
-                        a.vel = new_a_vel;
-                        // a.pos = new_a_pos;
-                        new_particles.push(a);
 
-                        let mut b = other.clone();
-                        b.vel = new_b_vel;
-                        // b.pos = new_b_pos;
+                        new_particles.push(a);
                         new_particles.push(b);
 
                         let old_b = other.clone();

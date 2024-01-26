@@ -71,8 +71,9 @@ async fn main() {
                 particles.push(Particle::new(
                     Vec2::new(mouse_position().0, mouse_position().1),
                     Vec2::new(
-                        1000. * thread_rng().gen_range(-1.0..1.0),
-                        1000. * thread_rng().gen_range(-1.0..1.0),
+                        // 1000. * thread_rng().gen_range(-1.0..1.0),
+                        // 1000. * thread_rng().gen_range(-1.0..1.0),
+                        100f32, 100f32,
                     ),
                     Vec2::new(0., 9.81),
                     5.,
@@ -105,10 +106,10 @@ async fn main() {
 
         clear_background(LIGHTGRAY);
 
-        let frozen_particles: Particles = particles.clone();
-        particles = update::update_world(&dt, frozen_particles);
-
         let mut grid = Grid::new(screen_width(), screen_height(), 3, 3);
+        let frozen_particles: Particles = particles.clone();
+        particles = update::update_world(&dt, frozen_particles, &grid);
+
         let mut i = 0;
         while let Some(tile) = grid.tiles.pop() {
             draw_text(
