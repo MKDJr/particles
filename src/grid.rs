@@ -58,16 +58,16 @@ impl Grid {
         let mut working_particles: Particles = particles.clone();
 
         while let Some(particle) = working_particles.pop() {
-            println!("---------- PARTICLE ------------");
-            dbg!(particle.pos);
+            // println!("---------- PARTICLE ------------");
+            // dbg!(particle.pos);
             let mut working_tiles: Vec<Tile> = self.tiles.clone();
             while let Some(tile) = working_tiles.pop() {
                 if point_intersect(&particle, &tile.bounding_box) {
                     let mut clone = particle.clone();
                     clone.tile = Some(tile.index);
-                    println!("----------- TILE ------------");
-                    dbg!(tile.index);
-                    dbg!(tile.bounding_box);
+                    // println!("----------- found the tile! ------------");
+                    // dbg!(tile.index);
+                    // dbg!(tile.bounding_box);
                     new_particles.push(clone);
                     // break;
                 }
