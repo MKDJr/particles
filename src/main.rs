@@ -106,19 +106,19 @@ async fn main() {
 
         clear_background(LIGHTGRAY);
 
-        let mut grid = Grid::new(screen_width(), screen_height(), 3, 3);
+        let mut grid = Grid::new(screen_width(), screen_height(), 15, 15);
         let frozen_particles: Particles = particles.clone();
         particles = update::update_world(&dt, frozen_particles, &grid);
 
         let mut i = 0;
         while let Some(tile) = grid.tiles.pop() {
-            draw_text(
-                &i.to_string(),
-                tile.bounding_box.lower_bound.x + 100.,
-                tile.bounding_box.lower_bound.y + 100.,
-                50.,
-                RED,
-            );
+            // draw_text(
+            //     &i.to_string(),
+            //     tile.bounding_box.lower_bound.x + 100.,
+            //     tile.bounding_box.lower_bound.y + 100.,
+            //     50.,
+            //     RED,
+            // );
             draw_bb(tile.bounding_box, BLUE);
             i += 1;
         }
