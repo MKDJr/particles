@@ -16,7 +16,7 @@ pub fn draw_bb(bounding_box: AABB, color: Color) {
         bounding_box.lower_bound.y,
         bounding_box.upper_bound.x - bounding_box.lower_bound.x,
         bounding_box.upper_bound.y - bounding_box.lower_bound.y,
-        5.,
+        1.,
         color,
     )
 }
