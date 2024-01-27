@@ -63,7 +63,7 @@ async fn main() {
     let dt: f32 = 1. / frame_rate;
 
     let mut particles: Particles = Particles::new();
-    let dur: f32 = 1.;
+    let dur: f32 = 0.2;
     let mut curr: f32 = 0.;
     loop {
         if dur < curr {
