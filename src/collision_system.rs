@@ -88,11 +88,7 @@ pub fn point_intersect(a: &Particle, b: &AABB) -> bool {
 
 pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Particle, Particle) //,(Vec2, Vec2))
 {
-    let d_intersect = a.pos.distance(b.pos);
-    let d_min: f32 = a.radius + b.radius;
-
-    let t = (d_min - (a.pos - b.pos)) / (a.vel - b.vel);
-    dbg!(t);
+    let t = calculate_t(a, b);
 
     let (mut a_collision, mut b_collision) = (a.clone(), b.clone());
     (a_collision.pos, b_collision.pos) = (a.pos - a.vel * t, b.pos - b.vel * t);
@@ -111,6 +107,39 @@ pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Particle, Parti
 
     return //(
         (a_post_collision, b_post_collision); //, (new_a_pos, new_b_pos));
+}
+
+// fraction of time before the particles collide
+fn calculate_t(a: &Particle, b: &Particle) -> f32 {
+    // From chapter 8 of "Mathematics and Physics for Programmers" by Danny Kodicek
+
+    let w = a.pos - b.pos;
+    let r = a.radius + b.radius;
+    let ww = w.dot(w);
+    // if ww < r * r {
+    //     panic!("embedded");
+    // }
+    let v = a.vel - b.vel;
+    let aaa = v.dot(v);
+    let bbb = w.dot(v);
+    let c = ww - r * r;
+    let root = bbb * bbb - aaa * c;
+    if root < 0f32 {
+        dbg!(root);
+        panic!("none");
+    }
+    let t = (-bbb - f32::sqrt(root)) / aaa;
+    if t > 1f32 {
+        dbg!(t);
+        panic!("none");
+    }
+
+    // let a_con = (a.vel - b.vel).length_squared();
+    // let b_con = 2f32 * ((a.pos - b.pos).dot(a.vel - b.vel));
+    // let c_con = (a.pos - b.pos).length_squared() - d_min;
+    // let t = -b_con - f32::sqrt(b_con.powi(2) - 4. * a_con * c_con) / (2. * a_con);
+    // dbg!(t);
+    return t;
 }
 
 /// I am certain the velocity calculation here is wrong.
