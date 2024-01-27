@@ -13,7 +13,7 @@ mod grid;
 mod update;
 mod utils;
 
-const RADIUS: f32 = 25.;
+const RADIUS: f32 = 2.;
 const COEF_OF_RESTITUTION: f32 = 0.95;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
