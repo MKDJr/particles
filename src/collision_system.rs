@@ -91,9 +91,10 @@ pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Particle, Parti
     let t = calculate_t(a, b);
 
     let (mut a_collision, mut b_collision) = (a.clone(), b.clone());
-    (a_collision.pos, b_collision.pos) = (a.pos - a.vel * t, b.pos - b.vel * t);
+    (a_collision.pos, b_collision.pos) = (a.pos + a.vel * t, b.pos + b.vel * t);
 
-    let (new_a_vel, new_b_vel) = calculate_post_collision_velocity(a, b);
+    let (new_a_vel, new_b_vel) =
+        calculate_post_collision_velocity(a, b, b_collision.pos - a_collision.pos);
 
     (a_collision.vel, b_collision.vel) = (new_a_vel, new_b_vel);
     let (mut a_post_collision, mut b_post_collision) = (a_collision.clone(), b_collision.clone());
@@ -103,7 +104,7 @@ pub fn handle_particle_collision(a: &Particle, b: &Particle) -> (Particle, Parti
     );
 
     println!("!!!!!!!!!!!!!! COLLISION !!!!!!!!!!!!!!!");
-    dbg!(a_post_collision, b_post_collision);
+    // dbg!(a_post_collision, b_post_collision);
 
     return //(
         (a_post_collision, b_post_collision); //, (new_a_pos, new_b_pos));
@@ -144,11 +145,22 @@ fn calculate_t(a: &Particle, b: &Particle) -> f32 {
 
 /// I am certain the velocity calculation here is wrong.
 
-fn calculate_post_collision_velocity(a: &Particle, b: &Particle) -> (Vec2, Vec2) {
-    let new_b_vel = (a.vel * a.mass + b.vel * b.mass) / b.mass;
-    let new_a_vel = (b.vel * b.mass + a.vel * a.mass) / a.mass;
+fn calculate_post_collision_velocity(
+    a: &Particle,
+    b: &Particle,
+    collision_vector: Vec2,
+) -> (Vec2, Vec2) {
+    let r = a.mass / b.mass;
+    let u = a.vel - b.vel;
+
+    let un = u.project_onto(collision_vector);
+    let ut = u - un;
+    let vn = un * (r - 1.) / (r + 1.);
+    let wn = un * 2. * r / (r + 1.);
+    let new_a_vel = ut + vn + b.vel;
+    let new_b_vel = wn + b.vel;
+
     return (new_a_vel, new_b_vel);
-    todo!();
 }
 
 // r_b + r_a = d_min
